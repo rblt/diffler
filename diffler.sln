@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rblt.diff", "rblt.diff\rblt.diff.csproj", "{1143240F-BDDC-479E-A5CB-35B40D037ED2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rblt.diff", "csharp\tools\rblt.diff.csproj", "{1143240F-BDDC-479E-A5CB-35B40D037ED2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rblt.tests.diff", "rblt.tests.diff\rblt.tests.diff.csproj", "{8BF1B7A6-7E04-4540-BD92-43C0303C5605}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rblt.tests.diff", "csharp\tests\rblt.tests.diff.csproj", "{8BF1B7A6-7E04-4540-BD92-43C0303C5605}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

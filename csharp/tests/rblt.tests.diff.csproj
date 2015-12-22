@@ -82,7 +82,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\rblt.diff\rblt.diff.csproj">
+    <ProjectReference Include="..\tools\rblt.diff.csproj">
       <Project>{1143240f-bddc-479e-a5cb-35b40d037ed2}</Project>
       <Name>rblt.diff</Name>
     </ProjectReference>

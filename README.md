@@ -75,7 +75,8 @@ public static void Main(string[] args)
       different propertyname/value pairs of "t2".
       
       delta = {
-        { "PropString", "string2" }
+        { "PropString", "string2" },
+        { "PropObject", System.Object }
       };
       
     */

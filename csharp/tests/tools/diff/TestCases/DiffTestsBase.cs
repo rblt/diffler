@@ -51,6 +51,12 @@ namespace rblt.Tests.Tools
 
             [DiffIgnore]
             public object PropIgnore { get; set; }
+
+            [DiffIgnoreOrder]
+            public int[] PropArray_IgnoreOrder { get; set; }
+
+            [DiffIgnoreOrder]
+            public Complex[] PropComplexArray_IgnoreOrder { get; set; }
         }
 
         public static void SetupMocks()
@@ -75,7 +81,13 @@ namespace rblt.Tests.Tools
                     new Complex() { ID = 2 },
                     new Complex() { ID = 3 }
                 },
-                PropIgnore = oIgnore
+                PropIgnore = oIgnore,
+                PropArray_IgnoreOrder = new int[] { 3, 2, 1 },
+                PropComplexArray_IgnoreOrder = new Complex[] {
+                    new Complex() { ID = 3 },
+                    new Complex() { ID = 2 },
+                    new Complex() { ID = 1 }
+                }
             };
 
             TestInstance2 = new TestClass()
@@ -89,13 +101,19 @@ namespace rblt.Tests.Tools
                     ID = 100,
                     StringProp = "ComplexProp"
                 },
-                PropArray = new int[] { 1, 2, 3},
+                PropArray = new int[] { 1, 2, 3 },
                 PropComplexArray = new Complex[] {
                     new Complex() { ID = 1 },
                     new Complex() { ID = 2 },
                     new Complex() { ID = 3 }
                 },
-                PropIgnore = oIgnore
+                PropIgnore = oIgnore,
+                PropArray_IgnoreOrder = new int[] { 2, 1, 3 },
+                PropComplexArray_IgnoreOrder = new Complex[] {
+                    new Complex() { ID = 1 },
+                    new Complex() { ID = 3 },
+                    new Complex() { ID = 2 }
+                }
             };
         }
 

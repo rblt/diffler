@@ -24,6 +24,21 @@ namespace rblt.Tools
     }
 
     /// <summary>
+    /// Represents an attribute for an array type property of which element order is ignored when used with the Tools.Diff methods.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    public sealed class DiffIgnoreOrderAttribute : Attribute
+    {
+        #region DiffIgnoreOrderAttribute
+
+        public DiffIgnoreOrderAttribute()
+        {
+        }
+
+        #endregion
+    }
+
+    /// <summary>
     /// Represents a helper class for detecting different property values on two instance of the same type.
     /// </summary>
     public static class Diff
@@ -34,61 +49,45 @@ namespace rblt.Tools
 
         private static class ArrayEqualityComparer
         {
-            public static IEqualityComparer<T[]> Create<T>(IEqualityComparer<T> comparer)
+            public static IEqualityComparer<T[]> Create<T>(IEqualityComparer<T> comparer, bool ignoreOrder = false)
             {
+                if (ignoreOrder)
+                    return new UnorderedArrayEqualityComparer<T>(comparer);
+                        
                 return new ArrayEqualityComparer<T>(comparer);
             }
 
-            public static IEqualityComparer<T[]> Create<T>()
+            public static IEqualityComparer<T[]> Create<T>(bool ignoreOrder = false)
             {
+                if (ignoreOrder)
+                    return new UnorderedArrayEqualityComparer<T>();
+
                 return new ArrayEqualityComparer<T>();
             }
         }
 
-        private sealed class ArrayEqualityComparer<T> : IEqualityComparer<T[]>
+        private abstract class ArrayEqualityComparerBase<T>: IEqualityComparer<T[]>
         {
-            private static readonly IEqualityComparer<T[]> defaultInstance = new
-                ArrayEqualityComparer<T>();
+            protected readonly IEqualityComparer<T> elementComparer;
 
-            public static IEqualityComparer<T[]> Default
-            {
-                get { return defaultInstance; }
-            }
-
-            private readonly IEqualityComparer<T> elementComparer;
-
-            public ArrayEqualityComparer()
+            public ArrayEqualityComparerBase()
                 : this(EqualityComparer<T>.Default)
             {
             }
 
-            public ArrayEqualityComparer(IEqualityComparer<T> elementComparer)
+            public ArrayEqualityComparerBase(IEqualityComparer<T> elementComparer)
             {
                 this.elementComparer = elementComparer;
             }
 
-            public bool Equals(T[] x, T[] y)
+            public virtual bool Equals(T[] x, T[] y)
             {
                 if (x == y)
                 {
                     return true;
                 }
-                if (x == null || y == null)
-                {
-                    return false;
-                }
-                if (x.Length != y.Length)
-                {
-                    return false;
-                }
-                for (int i = 0; i < x.Length; i++)
-                {
-                    if (!elementComparer.Equals(x[i], y[i]))
-                    {
-                        return false;
-                    }
-                }
-                return true;
+               
+                return false;
             }
 
             public int GetHashCode(T[] array)
@@ -106,6 +105,119 @@ namespace rblt.Tools
             }
         }
 
+        private sealed class UnorderedArrayEqualityComparer<T> : ArrayEqualityComparerBase<T>
+        {
+            private static readonly IEqualityComparer<T[]> defaultInstance = new
+                UnorderedArrayEqualityComparer<T>();
+
+            public static IEqualityComparer<T[]> Default
+            {
+                get { return defaultInstance; }
+            }
+
+            public UnorderedArrayEqualityComparer()
+                : base()
+            {
+            }
+
+            public UnorderedArrayEqualityComparer(IEqualityComparer<T> elementComparer)
+                : base(elementComparer)
+            {
+            }
+
+            public override bool Equals(T[] x, T[] y)
+            {
+                if (x == y)
+                {
+                    return true;
+                }
+                if (x == null || y == null)
+                {
+                    return false;
+                }
+                if (x.Length != y.Length)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < x.Length; i++)
+                {
+                    if (IndexOf(y, x[i]) < 0)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            private int IndexOf(T[] array, T element)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    if (elementComparer.Equals(array[i], element))
+                        return i;
+                }
+
+                return -1;
+            }
+        }
+
+        private sealed class ArrayEqualityComparer<T> : ArrayEqualityComparerBase<T>
+        {
+            private static readonly IEqualityComparer<T[]> defaultInstance = new
+                ArrayEqualityComparer<T>();
+
+            private static readonly IEqualityComparer<T[]> orderIgnoreInstance = new
+                UnorderedArrayEqualityComparer<T>();
+
+            public static IEqualityComparer<T[]> Default
+            {
+                get { return defaultInstance; }
+            }
+
+            public static IEqualityComparer<T[]> IgnoreOrder
+            {
+                get { return orderIgnoreInstance; }
+            }
+
+            public ArrayEqualityComparer()
+                : base()
+            {
+            }
+
+            public ArrayEqualityComparer(IEqualityComparer<T> elementComparer)
+                : base(elementComparer)
+            {
+            }
+
+            public override bool Equals(T[] x, T[] y)
+            {
+                if (x == y)
+                {
+                    return true;
+                }
+                if (x == null || y == null)
+                {
+                    return false;
+                }
+                if (x.Length != y.Length)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < x.Length; i++)
+                {
+                    if (!elementComparer.Equals(x[i], y[i]))
+                    {
+                        return false;
+                    }
+                }
+        
+                return true;
+            }
+        }
+
         private delegate IDictionary<string, object> ComparerDelagate<T>(T a, T b);
         private delegate bool ArrayComparerDelegate(object aArrayOfT, object bArrayOfT);
 
@@ -115,6 +227,7 @@ namespace rblt.Tools
 
         private static Dictionary<Type, Delegate> _comparers = null;
         private static Dictionary<Type, ArrayComparerDelegate> _arrayComparers = null;
+        private static Dictionary<Type, ArrayComparerDelegate> _arrayComparers_ignoreOrder = null;
 
         private static readonly object _syncRoot = new object();
         private static readonly object _syncRoot2 = new object();
@@ -129,28 +242,35 @@ namespace rblt.Tools
         }
 
         private static MethodInfo _arraysAreEqual = typeof(Diff).GetMethod("ArraysAreEqual");
-        public static bool ArraysAreEqual(Type type, object v1, object v2)
+        public static bool ArraysAreEqual(Type type, object v1, object v2, bool ignoreOrder)
         {
-            if (_arrayComparers == null)
+            if (ignoreOrder)
+                return ArraysAreEqualInternal(type, v1, v2, ignoreOrder, ref _arrayComparers_ignoreOrder);
+
+            return ArraysAreEqualInternal(type, v1, v2, ignoreOrder, ref _arrayComparers);
+        }
+        private static bool ArraysAreEqualInternal(Type type, object v1, object v2, bool ignoreOrder, ref Dictionary<Type, ArrayComparerDelegate> arrayComparers)
+        { 
+            if (arrayComparers == null)
             {
                 lock (_syncRoot2)
                 {
-                    if (_arrayComparers == null)
-                        _arrayComparers = new Dictionary<Type, ArrayComparerDelegate>();
+                    if (arrayComparers == null)
+                        arrayComparers = new Dictionary<Type, ArrayComparerDelegate>();
                 }
             }
 
             ArrayComparerDelegate compareArrays = null;
-            if (!_arrayComparers.ContainsKey(type))
+            if (!arrayComparers.ContainsKey(type))
             {
                 lock (_syncRoot2)
                 {
-                    if (!_arrayComparers.ContainsKey(type))
+                    if (!arrayComparers.ContainsKey(type))
                     {
                         var arrayType = type.MakeArrayType();
                         var tyArrayComparer = Assembly.GetExecutingAssembly().GetType(typeof(Diff).FullName + "+ArrayEqualityComparer");
-                        var createMethod = tyArrayComparer.GetMethod("Create", new Type[] { }).MakeGenericMethod(type);
-                        var comparer = createMethod.Invoke(null, null);
+                        var createMethod = tyArrayComparer.GetMethod("Create", new Type[] { typeof(bool) }).MakeGenericMethod(type);
+                        var comparer = createMethod.Invoke(null, new object[] { ignoreOrder });
                         var equalsMethodInfo = comparer.GetType().GetMethod("Equals", new Type[] { type.MakeArrayType(), type.MakeArrayType() });
 
                         ParameterExpression parA = Expression.Parameter(typeof(object), "a");
@@ -175,11 +295,11 @@ namespace rblt.Tools
                             parA, parB
                         ).Compile();
 
-                        _arrayComparers[type] = compareArrays;
+                        arrayComparers[type] = compareArrays;
                     }
                 }
             }
-            else compareArrays = _arrayComparers[type];
+            else compareArrays = arrayComparers[type];
 
             return compareArrays(v1, v2);
         }
@@ -235,16 +355,22 @@ namespace rblt.Tools
                         var body = Expression.Block(
                             new ParameterExpression[] { changeSet },
                             props.Where(p => !Attribute.IsDefined(p, typeof(DiffIgnoreAttribute)))
-                                .Select(p => new { Property = p, IsArray = p.PropertyType.IsArray && p.PropertyType.HasElementType })
+                                .Select(p => new { Property = p, IsArray = p.PropertyType.IsArray && p.PropertyType.HasElementType, IgnoreOrder = Attribute.IsDefined(p, typeof(DiffIgnoreOrderAttribute)) })
                                 .Select(p =>
                                    Expression.IfThen(
                                        Expression.Not(
-                                           Expression.Call(
-                                               p.IsArray ? _arraysAreEqual : _areEqual,
-                                               Expression.Constant(p.Property.PropertyType.GetElementType(), typeof(Type)),
-                                               Expression.Convert(Expression.Property(parA, p.Property), typeof(object)),
-                                               Expression.Convert(Expression.Property(parB, p.Property), typeof(object))
-                                           )
+                                           p.IsArray ?
+                                               Expression.Call(_arraysAreEqual,
+                                                   Expression.Constant(p.Property.PropertyType.GetElementType(), typeof(Type)),
+                                                   Expression.Convert(Expression.Property(parA, p.Property), typeof(object)),
+                                                   Expression.Convert(Expression.Property(parB, p.Property), typeof(object)),
+                                                   Expression.Constant(p.IgnoreOrder, typeof(bool))) :
+                                               Expression.Call(
+                                                   _areEqual,
+                                                   Expression.Constant(p.Property.PropertyType.GetElementType(), typeof(Type)),
+                                                   Expression.Convert(Expression.Property(parA, p.Property), typeof(object)),
+                                                   Expression.Convert(Expression.Property(parB, p.Property), typeof(object))
+                                               )
                                        ),
                                        Expression.Block(
                                            Expression.IfThen(Expression.Equal(changeSet, Expression.Constant(null, typeof(Dictionary<string, object>))),

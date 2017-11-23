@@ -85,6 +85,8 @@
     <Compile Include="TestCases\When_diffing_unequal_instances_10.cs" />
     <Compile Include="TestCases\When_diffing_unequal_instances_9.cs" />
     <Compile Include="TestCases\When_diffing_unequal_instances_8.cs" />
+    <Compile Include="TestCases\When_diffing_unequal_instances_w_ignore_extensiondata_false.cs" />
+    <Compile Include="TestCases\When_diffing_unequal_instances_w_ignore_extensiondata_true.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

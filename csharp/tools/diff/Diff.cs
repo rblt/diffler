@@ -223,7 +223,40 @@ namespace rblt.Tools
 
         #endregion
 
+        #region Properties
+
+        public static bool IgnoreExtensionDataProperties
+        {
+            get
+            {
+                return _ignoreExtensionDataProperties;
+            }
+            set
+            {
+                if (value != _ignoreExtensionDataProperties)
+                {
+                    _ignoreExtensionDataProperties = value;
+
+                    PropertyInfo p = null;
+                    if (_comparers != null && _comparers.Count > 0)
+                    {
+                        lock (_syncRoot)
+                        {
+                            _comparers.Keys.Where(c =>
+                                (p = c.GetProperty("ExtensionData", BindingFlags.GetProperty | BindingFlags.Instance | BindingFlags.Public)) != null && !Attribute.IsDefined(p, typeof(DiffIgnoreAttribute)))
+                                .ToList()
+                                .ForEach(k => _comparers.Remove(k));
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
+
         #region Membervariables
+
+        private static bool _ignoreExtensionDataProperties = true;
 
         private static Dictionary<Type, Delegate> _comparers = null;
         private static Dictionary<Type, ArrayComparerDelegate> _arrayComparers = null;
@@ -354,7 +387,7 @@ namespace rblt.Tools
 
                         var body = Expression.Block(
                             new ParameterExpression[] { changeSet },
-                            props.Where(p => !Attribute.IsDefined(p, typeof(DiffIgnoreAttribute)))
+                            props.Where(p => (!_ignoreExtensionDataProperties || _ignoreExtensionDataProperties && p.Name != "ExtensionData") && !Attribute.IsDefined(p, typeof(DiffIgnoreAttribute)))
                                 .Select(p => new { Property = p, IsArray = p.PropertyType.IsArray && p.PropertyType.HasElementType, IgnoreOrder = Attribute.IsDefined(p, typeof(DiffIgnoreOrderAttribute)) })
                                 .Select(p =>
                                    Expression.IfThen(

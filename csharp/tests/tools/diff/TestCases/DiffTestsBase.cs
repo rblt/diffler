@@ -57,12 +57,15 @@ namespace rblt.Tests.Tools
 
             [DiffIgnoreOrder]
             public Complex[] PropComplexArray_IgnoreOrder { get; set; }
+
+            public object ExtensionData { get; set; }
         }
 
         public static void SetupMocks()
         {
             var oObj = new object();
             var oIgnore = new object();
+            var extensionData = new object();
             
             TestInstance1 = new TestClass()
             {
@@ -87,7 +90,8 @@ namespace rblt.Tests.Tools
                     new Complex() { ID = 3 },
                     new Complex() { ID = 2 },
                     new Complex() { ID = 1 }
-                }
+                },
+                ExtensionData = extensionData
             };
 
             TestInstance2 = new TestClass()
@@ -113,7 +117,8 @@ namespace rblt.Tests.Tools
                     new Complex() { ID = 1 },
                     new Complex() { ID = 3 },
                     new Complex() { ID = 2 }
-                }
+                },
+                ExtensionData = extensionData
             };
         }
 
